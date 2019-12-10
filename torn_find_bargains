@@ -8,11 +8,15 @@ IDS=(35 36 37 38 39 44 45 46 48 66 67 68 97 129 180 181 182 183 184 186 187 197 
     426 209 210 258 310 731 392 394 403 417 372 432 159 384 385 560 617 618 364 365
     368 369 564 565 566 567 568 570 571 572 573 574 575 576 577 578 579 817 985)
 
+# read API key from the command line argument
 [ "$1" != "" ] && KEY=$1
+
+command -v curl >/dev/null 2>&1 || { echo "curl is required but not found, aborting."; exit 1; }
+command -v jq >/dev/null 2>&1 || { echo "jq is required but not found, aborting."; exit 1; }
 
 if [ -z $KEY ]; then
     echo "Please configure your Torn API key."
-    exit 0
+    exit 1
 fi
 
 # make sure data dir exists
