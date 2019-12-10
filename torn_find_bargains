@@ -1,0 +1,83 @@
+#!/bin/bash
+
+KEY="" # put your Torn API key here
+BARGAIN_COEFF="90/100"
+DATA_DIR="./items_data"
+IDS=(35 36 37 38 39 44 45 46 48 66 67 68 97 129 180 181 182 183 184 186 187 197 199
+    205 206 215 258 260 261 263 264 266 267 268 269 271 272 273 274 276 277 281 282
+    426 209 210 258 310 731 392 394 403 417 372 432 159 384 385 560 617 618 364 365
+    368 369 564 565 566 567 568 570 571 572 573 574 575 576 577 578 579 817 985)
+
+if [ -z $KEY ]; then
+    echo "Please configure your Torn API key."
+    exit 0
+fi
+
+# make sure data dir exists
+[ ! -d "$DATA_DIR" ] && mkdir "$DATA_DIR"
+
+# check and update data if necessary
+today="$(date --utc +%D)"
+if [ -z "$(ls -A "$DATA_DIR")" ] || [ $today != $(cat "$DATA_DIR/timestamp") ]; then
+    echo -n "Updating items data... "
+    echo $today > "$DATA_DIR/timestamp"
+
+    for id in ${IDS[@]}; do
+        json_item=$(curl -s "https://api.torn.com/torn/$id?selections=items&key=$KEY")
+        echo $json_item > "$DATA_DIR/$id.json"
+    done
+    echo "done. Please wait 1 more minute."
+
+    sleep 60
+fi
+
+#for id in {1..1100}; do
+#for i in 1; do
+for id in ${IDS[@]}; do
+#    id=$1
+
+    json_market=$(curl -s "https://api.torn.com/market/$id?selections=bazaar,itemmarket&key=$KEY")
+    [ -z "$json_market" ] && continue
+
+    json_item=$(cat "$DATA_DIR/$id.json")
+    [ -z "$json_item" ] && continue
+
+    if [[ "$json_market" == *"\"bazaar\":null"* ]]; then
+        bazaar_price=0
+        bazaar_quantity=0
+    else
+        bazaar_price=$(echo "$json_market" | jq '.bazaar[0].cost')
+        bazaar_quantity=$(echo "$json_market" | jq '.bazaar[0].quantity')
+    fi
+
+    if [[ "$json_market" == *"\"itemmarket\":null"* ]]; then
+        market_price=0
+        market_quantity=0
+    else
+        market_price=$(echo "$json_market" | jq '.itemmarket[0].cost')
+        cmd='.itemmarket[] | select(.cost == PRICE) | length'
+        market_quantity=$(echo "$json_market" | jq "${cmd/PRICE/$market_price}" | wc -l)
+    fi
+
+    if [ $bazaar_price -eq 0 ] && [ $market_price -eq 0 ]; then
+        continue
+    fi
+
+    name=$(echo "$json_item" | jq '.items[].name')
+    market_value=$(echo "$json_item" | jq '.items[].market_value')
+
+    [ -z "$market_value" ] && continue
+    [ $market_value -eq 0 ] && continue
+
+    let bargain=$market_value*$BARGAIN_COEFF
+
+    if [ $bazaar_price -le $bargain ] || [ $market_price -le $bargain ]; then
+        normal=$(tput sgr0)
+        green=$(tput setaf 2)
+
+        [ $bazaar_price -le $bargain ] && bazaar_color=$green || bazaar_color=$normal
+        [ $market_price -le $bargain ] && market_color=$green || market_color=$normal
+
+        printf "%-30s %s(%s) %s(%s) (%s)\n" "$name" "$bazaar_color$bazaar_price$normal" $bazaar_quantity "$market_color$market_price$normal" $market_quantity $market_value
+    fi
+done
