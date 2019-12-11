@@ -30,8 +30,7 @@ if [ -z "$(ls -A "$DATA_DIR")" ] || [ $today != $(cat "$DATA_DIR/timestamp") ]; 
     echo $today > "$DATA_DIR/timestamp"
 
     for id in ${IDS[@]}; do
-        json_item=$(curl -s "https://api.torn.com/torn/$id?selections=items&key=$KEY")
-        echo $json_item > "$DATA_DIR/$id.json"
+        curl -s "https://api.torn.com/torn/$id?selections=items&key=$KEY" > "$DATA_DIR/$id.json"
     done
     echo "done. Please wait 1 more minute."
 
@@ -41,8 +40,7 @@ fi
 # check whether IDS have been updated
 for id in ${IDS[@]}; do
     if [ ! -f "$DATA_DIR/$id.json" ]; then
-        json_item=$(curl -s "https://api.torn.com/torn/$id?selections=items&key=$KEY")
-        echo $json_item > "$DATA_DIR/$id.json"
+        curl -s "https://api.torn.com/torn/$id?selections=items&key=$KEY" > "$DATA_DIR/$id.json"
     fi
 done
 
