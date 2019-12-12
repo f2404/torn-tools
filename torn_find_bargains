@@ -25,7 +25,8 @@ fi
 
 # check and update data if necessary
 today="$(date --utc +%D)"
-if [ -z "$(ls -A "$DATA_DIR")" ] || [ $today != $(cat "$DATA_DIR/timestamp") ]; then
+if [ -z "$(ls -A "$DATA_DIR")" ] || [ ! -f "$DATA_DIR/timestamp" ] || \
+  [ $today != $(cat "$DATA_DIR/timestamp") ]; then
     echo -n "Updating items data... "
     echo $today > "$DATA_DIR/timestamp"
 
