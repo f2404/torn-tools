@@ -95,6 +95,7 @@ for id in ${IDS[@]}; do
         # add thousand separators
         bazaar_price=$(printf "%'.f\n" $bazaar_price)
         market_price=$(printf "%'.f\n" $market_price)
+        market_value=$(printf "%'.f\n" $market_value)
 
         printf "%-30s %s(%s) %s(%s) (%s)\n" "$name" "$bazaar_color$bazaar_price$normal" $bazaar_quantity "$market_color$market_price$normal" $market_quantity $market_value
     fi
