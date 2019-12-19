@@ -92,6 +92,10 @@ for id in ${IDS[@]}; do
         [ $bazaar_price -le $bargain ] && bazaar_color=$green || bazaar_color=$normal
         [ $market_price -le $bargain ] && market_color=$green || market_color=$normal
 
+        # add thousand separators
+        bazaar_price=$(printf "%'.f\n" $bazaar_price)
+        market_price=$(printf "%'.f\n" $market_price)
+
         printf "%-30s %s(%s) %s(%s) (%s)\n" "$name" "$bazaar_color$bazaar_price$normal" $bazaar_quantity "$market_color$market_price$normal" $market_quantity $market_value
     fi
 done
