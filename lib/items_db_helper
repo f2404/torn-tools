@@ -1,0 +1,31 @@
+#!/bin/bash
+
+DATA_DIR="./items_data"
+
+update_items_data()
+{
+    # make sure data dir exists
+    [ ! -d "$DATA_DIR" ] && mkdir "$DATA_DIR"
+
+    # check and update data if necessary
+    local today="$(date --utc +%D)"
+
+    if [ ! -f "$DATA_DIR/timestamp" ] || [ $today != $(cat "$DATA_DIR/timestamp") ]; then
+        echo -n "Updating items data... "
+        echo $today > "$DATA_DIR/timestamp"
+
+        for id in ${IDS[@]}; do
+            curl -s "https://api.torn.com/torn/$id?selections=items&key=$KEY" > "$DATA_DIR/$id.json"
+        done
+
+        echo "done. Please wait 1 more minute."
+        sleep 60
+    fi
+
+    # check whether IDS have been updated
+    for id in ${IDS[@]}; do
+        if [ ! -f "$DATA_DIR/$id.json" ]; then
+            curl -s "https://api.torn.com/torn/$id?selections=items&key=$KEY" > "$DATA_DIR/$id.json"
+        fi
+    done
+}

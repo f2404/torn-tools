@@ -1,8 +1,7 @@
 #!/bin/bash
 
-KEY="" # put your Torn API key here
+KEY="" # put your Torn API key here or provide it via command line
 BARGAIN_COEFF="90/100"
-DATA_DIR="./items_data"
 IDS=(35 36 37 38 39 44 45 46 48 66 67 68 97 129 180 181 182 183 184 186 187 197 199
     205 206 215 258 260 261 263 264 266 267 268 269 271 272 273 274 276 277 281 282
     426 209 210 310 731 392 394 403 417 372 432 159 384 385 560 617 618 364 365
@@ -20,36 +19,13 @@ if [ -z $KEY ]; then
     exit 1
 fi
 
-# make sure data dir exists
-[ ! -d "$DATA_DIR" ] && mkdir "$DATA_DIR"
+# DATA_DIR is defined there
+source lib/items_db_helper
 
-# check and update data if necessary
-today="$(date --utc +%D)"
-if [ -z "$(ls -A "$DATA_DIR")" ] || [ ! -f "$DATA_DIR/timestamp" ] || \
-  [ $today != $(cat "$DATA_DIR/timestamp") ]; then
-    echo -n "Updating items data... "
-    echo $today > "$DATA_DIR/timestamp"
+update_items_data
 
-    for id in ${IDS[@]}; do
-        curl -s "https://api.torn.com/torn/$id?selections=items&key=$KEY" > "$DATA_DIR/$id.json"
-    done
-    echo "done. Please wait 1 more minute."
-
-    sleep 60
-fi
-
-# check whether IDS have been updated
+# do the main job
 for id in ${IDS[@]}; do
-    if [ ! -f "$DATA_DIR/$id.json" ]; then
-        curl -s "https://api.torn.com/torn/$id?selections=items&key=$KEY" > "$DATA_DIR/$id.json"
-    fi
-done
-
-#for id in {1..1100}; do
-#for i in 1; do
-for id in ${IDS[@]}; do
-#    id=$1
-
     json_market=$(curl -s "https://api.torn.com/market/$id?selections=bazaar,itemmarket&key=$KEY")
     [ -z "$json_market" ] && continue
 
